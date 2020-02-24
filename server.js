@@ -32,11 +32,11 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.post('/user', authController.authenticate([userRoles.ADMIN]), userController.insertUser);
 app.post('/user/login', userController.login);
 
-app.post('/project', authController.authenticate([userRoles.ADMIN]), projectController.insertProject);
+app.post('/project', authController.authenticate([userRoles.ADMIN, userRoles.SPE]), projectController.insertProject);
 app.get('/project/:ct', authController.authenticate([userRoles.ANY]), projectController.getProjectByCt);
 app.get('/project', authController.authenticate([userRoles.ANY]), projectController.getProjects);
 app.put('/project/:ct', authController.authenticate([userRoles.ANY]), projectController.updateProject);
-app.delete('/project/:ct', authController.authenticate([userRoles.ADMIN]), projectController.deleteProject);
+app.delete('/project/:ct', authController.authenticate([userRoles.ADMIN, userRoles.SPE]), projectController.deleteProject);
 
 app.post('/template', authController.authenticate([userRoles.ADMIN]), templateController.insertTemplate);
 
