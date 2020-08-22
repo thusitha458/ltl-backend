@@ -6,6 +6,7 @@ const templateService = require('../services/template-service');
 module.exports.insertProject = async (req, res, next) => {
     try {
         let ct = req.body.ct;
+        let items = req.body.items;
         let customer = req.body.customer;
 
         let actionPlan = await templateService.getActionPlan();
@@ -14,7 +15,7 @@ module.exports.insertProject = async (req, res, next) => {
         if (project) {
             res.status(400).json({error: 'Project already exists'});
         } else {
-            await projectService.insertProject(ct, customer, actionPlan.fields);
+            await projectService.insertProject(ct, customer, items, actionPlan.fields);
             res.json();
         }
     } catch (error) {
@@ -62,51 +63,55 @@ module.exports.getProjectByCt = async (req, res, next) => {
 module.exports.updateProject = async (req, res, next) => {
     try {
         let ct = req.params.ct;
-        let actionPlan = req.body.actionPlan || [];
+        let customer = req.body.customer;
+        let items = req.body.items;
+        let actionPlan = req.body.actionPlan;
 
         let previousProject = await projectService.getProjectByCt(ct);
         if (previousProject) {
             let previousActionPlan = previousProject.actionPlan;
 
             let valid = true;
-            actionPlan.forEach((field, fieldIndex) => {
-                field.innerFields.forEach((innerField, innerFieldIndex) => {
-                    let previousValue = previousActionPlan[fieldIndex].innerFields[innerFieldIndex].value;
-                    let currentValue = actionPlan[fieldIndex].innerFields[innerFieldIndex].value;
-                    if (innerField.editable
-                        && currentValue !== previousValue
-                        && req.user
-                        && innerField.editableRoles.findIndex(role => role === req.user.role) === -1) {
-                        valid = false;
-                    }
-                });
-            });
-
-            // auto set from enum
-            actionPlan = actionPlan.map((field, fieldIndex) => {
-                return {
-                    ...field,
-                    innerFields: field.innerFields.map((innerField, innerFieldIndex) => {
-                        if (innerField.autoSetFromEnum) {
-                            let idOfEnum = innerField.autoSetFromEnum.enumId;
-                            let targetValueOfEnum = innerField.autoSetFromEnum.value;
-
-                            let previousValueOfEnum = previousActionPlan[fieldIndex].innerFields[idOfEnum].value;
-                            let currentValueOfEnum = actionPlan[fieldIndex].innerFields[idOfEnum].value;
-                            if (currentValueOfEnum === targetValueOfEnum && currentValueOfEnum !== previousValueOfEnum) {
-                                return {
-                                    ...innerField,
-                                    value: innerField.type === 'Date' ? moment().utcOffset('+0530').format('YYYY-MM-DD') : currentValueOfEnum,
-                                };
-                            }
+            if (actionPlan) {
+                actionPlan.forEach((field, fieldIndex) => {
+                    field.innerFields.forEach((innerField, innerFieldIndex) => {
+                        let previousValue = previousActionPlan[fieldIndex].innerFields[innerFieldIndex].value;
+                        let currentValue = actionPlan[fieldIndex].innerFields[innerFieldIndex].value;
+                        if (innerField.editable
+                            && currentValue !== previousValue
+                            && req.user
+                            && innerField.editableRoles.findIndex(role => role === req.user.role) === -1) {
+                            valid = false;
                         }
-                        return innerField;
-                    }),
-                };
-            });
+                    });
+                });
+    
+                // auto set from enum
+                actionPlan = actionPlan.map((field, fieldIndex) => {
+                    return {
+                        ...field,
+                        innerFields: field.innerFields.map((innerField, innerFieldIndex) => {
+                            if (innerField.autoSetFromEnum) {
+                                let idOfEnum = innerField.autoSetFromEnum.enumId;
+                                let targetValueOfEnum = innerField.autoSetFromEnum.value;
+    
+                                let previousValueOfEnum = previousActionPlan[fieldIndex].innerFields[idOfEnum].value;
+                                let currentValueOfEnum = actionPlan[fieldIndex].innerFields[idOfEnum].value;
+                                if (currentValueOfEnum === targetValueOfEnum && currentValueOfEnum !== previousValueOfEnum) {
+                                    return {
+                                        ...innerField,
+                                        value: innerField.type === 'Date' ? moment().utcOffset('+0530').format('YYYY-MM-DD') : currentValueOfEnum,
+                                    };
+                                }
+                            }
+                            return innerField;
+                        }),
+                    };
+                });
+            }
 
             if (valid) {
-                let project = await projectService.updateProjectByCt(ct, actionPlan);
+                let project = await projectService.updateProjectByCt(ct, customer, items, actionPlan);
                 if (project) {
                     res.json({project: project});
                 } else {

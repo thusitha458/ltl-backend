@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 
 const ProjectSchema = new Schema({
     ct: {type: String, trim: true, required: true},
+    items: [String],
     customer: {
         name: {type: String, trim: true, required: true},
     },

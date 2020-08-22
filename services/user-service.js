@@ -8,3 +8,7 @@ module.exports.insertUser = async (userRole, password) => {
 module.exports.getUser = async userRole => {
     return await User.findOne({role: userRole});
 };
+
+module.exports.updatePassword = async (role, password) => {
+    return await User.updateOne({ role }, { $set: { password } });
+};

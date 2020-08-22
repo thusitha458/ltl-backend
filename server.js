@@ -31,6 +31,8 @@ app.use(bodyParser.urlencoded({extended: false}));
 
 app.post('/user', authController.authenticate([userRoles.ADMIN]), userController.insertUser);
 app.post('/user/login', userController.login);
+app.put('/user/me/password', authController.authenticate([userRoles.ANY]), userController.updatePassword);
+app.put('/user/:role/password', authController.authenticate([userRoles.ADMIN]), userController.updatePasswordForRole);
 
 app.post('/project', authController.authenticate([userRoles.ADMIN, userRoles.SPE]), projectController.insertProject);
 app.get('/project/:ct', authController.authenticate([userRoles.ANY]), projectController.getProjectByCt);
