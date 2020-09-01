@@ -25,8 +25,11 @@ module.exports.deleteProjectByCt = async ct => {
     return await Project.deleteOne({ct: ct});
 };
 
-module.exports.updateProjectByCt = async (ct, customer, items, actionPlan) => {
+module.exports.updateProjectByCt = async (ct, newCt, customer, items, actionPlan) => {
     let updateQuery = undefined;
+    if (newCt) {
+        updateQuery = { ...updateQuery, ct: newCt };
+    }
     if (customer) {
         updateQuery = { ...updateQuery, customer };
     }

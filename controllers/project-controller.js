@@ -63,6 +63,7 @@ module.exports.getProjectByCt = async (req, res, next) => {
 module.exports.updateProject = async (req, res, next) => {
     try {
         let ct = req.params.ct;
+        let newCt = req.body.ct;
         let customer = req.body.customer;
         let items = req.body.items;
         let actionPlan = req.body.actionPlan;
@@ -110,13 +111,23 @@ module.exports.updateProject = async (req, res, next) => {
                 });
             }
 
+            if (newCt && ct !== newCt) {
+                const existingProject = await projectService.getProjectByCt(newCt);
+                if (existingProject) {
+                    res.status(400).json({error: 'A project having the given CT already exists'});
+                    return;
+                }
+            } 
+
             if (valid) {
-                let project = await projectService.updateProjectByCt(ct, customer, items, actionPlan);
+                let project = await projectService.updateProjectByCt(ct, newCt !== ct ? newCt : undefined, customer, items, actionPlan);
                 if (project) {
                     res.json({project: project});
                 } else {
                     res.status(400).json({error: 'Could not find project'});
                 }
+            } else {
+                res.status(400).json({error: 'Action plan validations failed'});
             }
         } else {
             res.status(400).json({error: 'Could not find project'});
